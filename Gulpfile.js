@@ -1,7 +1,7 @@
 
 var fs = require('fs'),
     gulp = require('gulp'),
-    sass = require('gulp-sass'),
+    sass = require('gulp-sass')(require('sass')),
     banner = require('gulp-banner'),
     rename = require('gulp-rename'),
     concat = require('gulp-concat'),
@@ -30,7 +30,7 @@ var comment = '/*\n' +
     ' * Released under the <%= pkg.license %> license.\n' +
     '*/\n\n';
 
-gulp.task('styles', function() {
+gulp.task('styles', function(done) {
   gulp.src(['./src/styles/normal.scss',
             './src/styles/botui.scss'])
       .pipe(sass().on('error', sass.logError))
@@ -41,9 +41,10 @@ gulp.task('styles', function() {
         year: new Date().getFullYear()
       }))
       .pipe(gulp.dest('./build/'));
+  done();
 });
 
-gulp.task('themes', function() {
+gulp.task('themes', function(done) {
   gulp.src('./src/styles/themes/*.scss')
       .pipe(sass().on('error', sass.logError))
       .pipe(minify())
@@ -51,9 +52,10 @@ gulp.task('themes', function() {
         path.basename = 'botui-theme-' + path.basename;
       }))
       .pipe(gulp.dest('./build/'));
+  done();
 });
 
-gulp.task('scripts', function () {
+gulp.task('scripts', function (done) {
       gulp.src('./src/scripts/botui.js') // simply copy the original one
       .pipe(htmlTemplate())
       .pipe(banner(comment, {
@@ -71,12 +73,14 @@ gulp.task('scripts', function () {
         year: new Date().getFullYear()
       }))
       .pipe(gulp.dest('./build/'));
+      done();
 });
 
-gulp.task('watch',function() {
-  gulp.watch('./src/styles/*.scss', ['styles']);
-  gulp.watch('./src/styles/themes/*.scss', ['themes']);
-  gulp.watch(['./src/scripts/botui.js', './src/botui.html'], ['scripts']);
+gulp.task('watch',function(done) {
+  gulp.watch('./src/styles/*.scss', gulp.task('styles'));
+  gulp.watch('./src/styles/themes/*.scss', gulp.task('themes'));
+  gulp.watch(['./src/scripts/botui.js', './src/botui.html'], gulp.task('scripts'));
+  done();
 });
 
-gulp.task('default', ['styles', 'scripts', 'themes']);
+gulp.task('default', gulp.series('styles', 'scripts', 'themes'));
